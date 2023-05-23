@@ -131,7 +131,7 @@ class User(db.Model):
         return len(found_user_list) == 1
 
     @classmethod
-    def signup(cls, username, email, password, image_url):
+    def signup(cls, username, email, password, image_url,location, bio, header_image_url):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -144,6 +144,9 @@ class User(db.Model):
             email=email,
             password=hashed_pwd,
             image_url=image_url,
+            location=location,
+            bio=bio,
+            header_image_url=header_image_url
         )
 
         db.session.add(user)
@@ -160,15 +163,18 @@ class User(db.Model):
         If can't find matching user (or if password is wrong), returns False.
         """
 
-        user = cls.query.filter_by(username=username).first()
+        # user = cls.query.filter_by(username=username).first()
+        u = User.query.filter_by(username=username).first()
+        print(u,"*****************************************************************************")
 
-        if user:
-            is_auth = bcrypt.check_password_hash(user.password, password)
+        if u:
+            print(password,"******************************************************************")
+            print(u.password,"*******************************************************")
+            is_auth = bcrypt.check_password_hash(u.password, password)
             if is_auth:
-                return user
+                return u
 
         return False
-
 
 class Message(db.Model):
     """An individual message ("warble")."""

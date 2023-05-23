@@ -76,7 +76,11 @@ def signup():
                 password=form.password.data,
                 email=form.email.data,
                 image_url=form.image_url.data or User.image_url.default.arg,
+                location=form.location.data,
+                bio=form.bio.data,
+                header_image_url=form.header_image_url.data
             )
+            
             db.session.commit()
 
         except IntegrityError:
@@ -215,7 +219,27 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
-    # IMPLEMENT THIS
+    user = User.query.get(session[CURR_USER_KEY])
+    form = UserAddForm(obj=user)
+
+    if CURR_USER_KEY not in session:
+        return redirect ('/')
+    
+    if form.validate_on_submit():
+        if not User.authenticate(form.username.data,
+                                 form.password.data):
+            flash(f"Bad Password try again, {g.user.username}!", "danger")
+            return redirect('/')
+            
+        user.email = form.email.data
+        user.image_url = form.image_url.data
+        user.location = form.location.data
+        user.bio = form.bio.data
+        user.header_image_url = form.header_image_url.data
+        db.session.commit()
+        return redirect (f'/users/{user.id}')
+        
+    return render_template('users/edit.html', form = form)
 
 
 @app.route('/users/delete', methods=["POST"])
