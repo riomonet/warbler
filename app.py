@@ -320,12 +320,24 @@ def homepage():
     """
 
     if g.user:
-        messages = (Message
-                    .query
-                    .order_by(Message.timestamp.desc())
-                    .limit(100)
-                    .all())
+        user = g.user
+        following = user.following
 
+        msg = []
+        for usr in following:
+            msg += usr.messages
+        
+        messages = sorted(msg, key=lambda x: x.timestamp, reverse=True)
+        messages = messages[0:99]
+
+        # I could have figured out the query but this is prob easier and more fun
+
+        # messages = (Message
+        #             .query
+        #             .order_by(Message.timestamp.desc())
+        #             .limit(100)
+        #             .all())
+        
         return render_template('home.html', messages=messages)
 
     else:

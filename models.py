@@ -204,8 +204,8 @@ class Message(db.Model):
     )
 
     user = db.relationship('User')
-
-
+    
+    
 def connect_db(app):
     """Connect this database to provided Flask app.
 
