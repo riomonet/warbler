@@ -1,3 +1,5 @@
+
+
 import os
 
 from flask import Flask, render_template, request, flash, redirect, session, g
@@ -5,7 +7,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -157,7 +159,8 @@ def users_show(user_id):
                 .filter(Message.user_id == user_id)
                 .order_by(Message.timestamp.desc())
                 .limit(100)
-                .all())
+              .all())
+    
     return render_template('users/show.html', user=user, messages=messages)
 
 
@@ -166,7 +169,7 @@ def show_following(user_id):
     """Show list of people this user is following."""
 
     if not g.user:
-        flash("Access unauthorized.", "danger")
+        flash("unauthorized.", "danger")
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
@@ -183,6 +186,20 @@ def users_followers(user_id):
 
     user = User.query.get_or_404(user_id)
     return render_template('users/followers.html', user=user)
+
+
+
+@app.route('/users/<int:user_id>/likes')
+def users_likes(user_id):
+    """Show list of followers of this user."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+
+    return render_template('users/likes.html', user=user)
 
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
@@ -241,6 +258,26 @@ def profile():
         
     return render_template('users/edit.html', form = form)
 
+
+
+@app.route('/users/add_like/<message_id>', methods=["POST"])
+def add_like(message_id):
+
+    user_id = g.user.id
+    like = Likes.query.filter(Likes.message_id == message_id).filter(Likes.user_id == user_id).all()
+    
+    
+    if not like:
+        new_like = Likes(user_id=user_id, message_id=message_id)
+        db.session.add(new_like)
+        db.session.commit()
+    else:
+        db.session.delete(like[0])
+
+    db.session.commit()
+    return redirect('/')
+
+    p
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
@@ -318,7 +355,6 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-
     if g.user:
         user = g.user
         following = user.following
@@ -330,15 +366,20 @@ def homepage():
         messages = sorted(msg, key=lambda x: x.timestamp, reverse=True)
         messages = messages[0:99]
 
+        likes =  Likes.query.filter(Likes.user_id==user.id).all()
+        l = [lk.message_id for lk in likes]
+
         # I could have figured out the query but this is prob easier and more fun
 
+        # Message.query.join()
+        
         # messages = (Message
         #             .query
         #             .order_by(Message.timestamp.desc())
         #             .limit(100)
         #             .all())
         
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages,likes=l)
 
     else:
         return render_template('home-anon.html')
