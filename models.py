@@ -1,7 +1,6 @@
 """SQLAlchemy models for Warbler."""
 
 from datetime import datetime
-
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
@@ -165,11 +164,8 @@ class User(db.Model):
 
         # user = cls.query.filter_by(username=username).first()
         u = User.query.filter_by(username=username).first()
-        print(u,"*****************************************************************************")
 
         if u:
-            print(password,"******************************************************************")
-            print(u.password,"*******************************************************")
             is_auth = bcrypt.check_password_hash(u.password, password)
             if is_auth:
                 return u
